@@ -1,0 +1,20 @@
+{
+	"templateName1":
+		{
+			"regions":
+				{
+					"RegionName1":	['CityName', 'CityName', ...],
+					"RegionName2": [] #All cities in this region
+
+				},
+			"days": [9, 21, 5, 14]
+		},
+	"all_regions":
+		{
+			"regions":
+				{
+                  #All regions
+				},
+			"days": [9, 21, 5, 14]
+		}
+}
