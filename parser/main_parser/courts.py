@@ -34,14 +34,31 @@ async def get_hrefs(proxy, url, semaphore):
                     password=proxy['password'],
                     rdns=True
                 )
-    async with semaphore:
+    async with (semaphore):
         async with aiohttp.ClientSession(connector=connector) as session:
             async with session.get(url, headers=headers) as response:
                 text = await response.read()
                 soup = BeautifulSoup(text, 'html.parser')
-                courts_list = [i.text for i in soup.find_all('a', target='_blank')]
+                courts_list = soup.find(class_='msSearchResultTbl').find_all('tr')
+                courts = []
+                for tr in courts_list:
+                    link = tr.find('a', target='_blank')
+                    if link and all(reg not in link for reg in settings.NOT_PARSING_URLS):
+                        courts.append((tr.find('a').text, tr.find('a', target='_blank').text))
                 await asyncio.sleep(1)
-                return courts_list
+                return courts
+
+# def get_all_courts():
+#     ua = UserAgent()
+#     url = settings.ALL_REGIONS_URL
+#     headers = {'user-agent': ua.random}
+#     response = requests.get(url, headers=headers)
+#     soup = BeautifulSoup(response.text, 'html.parser')
+#
+#     courts_list = [i.text for i in soup.find_all('a', target='_blank')]
+#     courts = list(filter(lambda x: all(reg not in x for reg in settings.NOT_PARSING_URLS), courts_list))
+#
+#     return courts
 
 def get_all_courts():
     ua = UserAgent()
@@ -50,17 +67,20 @@ def get_all_courts():
     response = requests.get(url, headers=headers)
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    courts_list = [i.text for i in soup.find_all('a', target='_blank')]
-    courts = list(filter(lambda x: all(reg not in x for reg in settings.NOT_PARSING_URLS), courts_list))
+    courts_list = soup.find(class_='msSearchResultTbl').find_all('tr')
+    courts = [(tr.find('a').text, tr.find('a', target='_blank').text)
+              for tr in courts_list
+              if all(reg not in tr.find('a', target='_blank').text
+                     for reg in settings.NOT_PARSING_URLS)]
 
     return courts
-
 
 
 async def get_processing_urls(config):
     regions_and_cities = config.regions_and_cities
     if not regions_and_cities:
         courts_urls = get_all_courts()
+        courts_urls = set(courts_urls)
     else:
         proxies = config.proxies
         semaphore = asyncio.BoundedSemaphore(config.semaphore)
@@ -79,4 +99,4 @@ async def get_processing_urls(config):
 
         courts_urls = await asyncio.gather(*tasks)
         courts_urls = set(itertools.chain.from_iterable(courts_urls))
-    return sorted(sorted(courts_urls, key=lambda x: x.split('.')[1]), key=lambda x: x.split('.')[0])
+    return sorted(sorted(courts_urls, key=lambda x: x[1].split('.')[1]), key=lambda x: x[1].split('.')[0])

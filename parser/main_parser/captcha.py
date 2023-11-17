@@ -1,5 +1,4 @@
 from playwright.async_api._generated import Page
-from playwright._impl._api_types import Error
 
 from capmonstercloudclient import ClientOptions, CapMonsterClient
 from capmonstercloudclient.requests import ImageToTextRequest
@@ -8,7 +7,7 @@ import asyncio
 import aiofiles
 
 
-async def captcha(config, page: Page, number) :
+async def captcha(config, page: Page, number):
     img_name = f'img{number}.png'
 
     async def sender_solve(cap_monster_client, path=img_name):
@@ -44,7 +43,7 @@ async def captcha(config, page: Page, number) :
             except (GetTaskError, asyncio.TimeoutError):
                 await page.reload(timeout=120000)
             await page.fill('.text-input', text)
-            await page.press('.button-normal', 'Enter')
+            await page.press('.button-normal', 'Enter', timeout=240000)
             await asyncio.sleep(1)
             if 'Для продолжения необходимо пройти дополнительную проверку' in page_content:
                 flag = True

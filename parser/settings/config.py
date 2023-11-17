@@ -33,7 +33,7 @@ class Config:
 
     @property
     def dates(self):
-        days = self._template['days']
+        days = [int(i.strip()) for i in self._template['days'].split(',')]
         dates = [(datetime.now() + timedelta(days=day)).strftime('%d.%m.%Y') for day in days]
         return dates
 
@@ -98,4 +98,8 @@ class Config:
 
     @property
     def articles(self):
-        return self._template['articles']
+        return [i.strip() for i in self._template['articles'].split(',')]
+
+    @property
+    def writer(self):
+        return self.main_config.get('main_settings', 'csv_or_bipium')

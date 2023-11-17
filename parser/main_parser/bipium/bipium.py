@@ -13,10 +13,15 @@ class Bipium:
         self.catalog_url = f'https://{self.config.bipium_domain}.bpium.ru/api/v1/catalogs/{self.config.bipium_catalog}/records'
         self.session = session
 
-    async def write_line(self, line):
+    async def write_lines(self, lines):
+        resps = await asyncio.gather(*[self.sender(line) for line in lines])
+        return resps
+
+    async def sender(self, line):
         resp = await self.session.post(self.catalog_url, headers=self.headers, json=line)
         await asyncio.sleep(1)
         return resp.status
+
 
 
     async def create_table(self):
