@@ -9,6 +9,8 @@ from . import url_utils
 from collections import namedtuple
 import random
 from fake_useragent import UserAgent
+import threading
+import multiprocessing
 
 links_data = namedtuple('links_data', ['index', 'court_name', 'url'])
 
@@ -39,7 +41,7 @@ async def configurate_browsers(config, browser, urls, writer):
 
 async def parser(browser, urls: list[links_data], config, writer):
     context = await browser.new_context(user_agent=UserAgent().random)
-    await asyncio.sleep(random.randint(1, 3))
+    await asyncio.sleep(random.randint(1, 5))
     page = await context.new_page()
     for link_data in urls:
         print(link_data.url)
@@ -47,16 +49,25 @@ async def parser(browser, urls: list[links_data], config, writer):
         if not goto_checker:
             continue
         page_content = await page.content()
-        lines = get_lines(page_content, link_data, config)
-        try:
-            resps = await writer.write_lines(lines)
-        except Exception as e:
-            print(e)
-            print(type(e))
-            print('writer Error')
-    await page.close()
-#407
+        # lines = get_lines(page_content, link_data, config)
+        # try:
+        #     resps = await writer.write_lines(lines)
+        # except Exception as e:
+        #     print(e)
+        #     print(type(e))
+        #     print('writer Error')
 
+        t = asyncio.to_thread(get_lines, page_content, link_data, config)
+        lines = await t
+        resps = await writer.write_lines(lines)
+        print(resps)
+
+    await page.close()
+
+async def thread(page_content, link_data, config, writer):
+    lines = get_lines(page_content, link_data, config)
+    resps = await writer.write_lines(lines)
+    print(resps)
 
 
 async def main(config, writer):
