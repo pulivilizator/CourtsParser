@@ -1,16 +1,5 @@
 from bs4 import BeautifulSoup
 from datetime import datetime, date
-from natasha import (
-    Segmenter,
-    MorphVocab,
-    PER,
-    NamesExtractor,
-    NewsNERTagger,
-    NewsEmbedding,
-    Doc,
-    AddrExtractor,
-    LOC,
-)
 
 from ..settings import settings
 
@@ -126,17 +115,13 @@ def create_tmp_dict(link_data, tr, column_list, config):
 
 
 
-def get_city(court_name: str):
-    segmenter = Segmenter()
-    morph_vocab = MorphVocab()
-    addr_extractor = AddrExtractor(morph_vocab)
-
-    matches = addr_extractor(court_name)
-    facts = [i.fact.as_json for i in matches]
-
-    for i in facts:
-        if 'type' in i.keys() and i['type'] == 'город':
-            return i['value']
+def get_city(court_name: str):###
+    if 'г.' in court_name:
+        return court_name.split('г.')[1].strip().split()[0]
+    elif 'городе' in court_name:
+        return court_name.split('городе')[1].strip().split()[0]
+    elif 'города' in court_name:
+        return court_name.split('города')[1].strip().split()[0]
     return '-'
 
 def get_article_codes(info):
@@ -150,52 +135,18 @@ def get_article_codes(info):
     article = info[0].replace(' ', '')
     if len(info) > 1:
         codes = info[1].split(')')[0]
-    if not article[0].isdigit() or article[1] in ['\'', '"']:
-        article = codes = '-'
+    if not article[0].isdigit() or (len(article) > 1 and article[1] in ['\'', '"']): #Спроси про отриц отзывы
+        article = codes = '-'# про js часть, в олтзывах пишут хуйня
+        #Пигшут что поддерка плохая
+        #Про скидки
+        # Про возврат СМУТИЛИ ОТЫЗВЫ
+        #СМЕЖНЫЕ ТЕХНОЛОГИИ ЕСТЬ ЛИ? WEBPACKET, GIT, GITHUB, DOCKER и тд
+
     return (article, codes)
 
-# def get_codes(info):
-#     info = info.replace('ООО УК', '').replace('АО УК', '')
-#     codes = ''
-#     for c in settings.CODES:
-#         if f'({c})' in info or f' {c} ' in info:
-#             codes += f' {c}'
-#     if codes:
-#         return codes.strip()
-#     return '-'
-
 def get_fio(text):
-    text = 'Истец: ' + text.replace('ОТВЕТЧИК', ' ').title()
-    emb = NewsEmbedding()
-    segmenter = Segmenter()
-    morph_vocab = MorphVocab()
-    ner_tagger = NewsNERTagger(emb)
-    names_extractor = NamesExtractor(morph_vocab)
-    doc = Doc(text)
-    doc.segment(segmenter)
-    doc.tag_ner(ner_tagger)
-    for span in doc.spans:
-        span.normalize(morph_vocab)
+    return None
 
-    for span in doc.spans:
-        if span.type == PER:
-            span.extract_fact(names_extractor)
-
-    fio_dict = {_.normal.title(): _.fact.as_dict for _ in doc.spans if _.fact}
-    for k, v in fio_dict.items():
-        fio = k.split()
-        if len(fio) == 3:
-            return {' '.join(fio).title(): {'first': fio[1].title(), 'last': fio[0].title(), 'middle': fio[2].title()}}
-    fio = list(fio_dict.keys())
-    if len(fio) == 1 and len(fio[0].split()) == 3:
-        fio = fio[0].split()
-        return {' '.join(fio).title(): {'first': fio[1].title(), 'last': fio[0].title(), 'middle': fio[2].title()}}
-    elif len(fio) == 2 and len(fio[0].split()) + len(fio[1].split()) == 3:
-        fio = ' '.join(fio[:2]).split()
-        return {' '.join(fio).title(): {'first': fio[1].title(), 'last': fio[0].title(), 'middle': fio[2].title()}}
-    elif len(fio) == 3 and len(fio[0].split()) + len(fio[1].split()) + len(fio[2].split()) == 3:
-        fio = ' '.join(fio[:3]).split()
-        return {' '.join(fio).title(): {'first': fio[1].title(), 'last': fio[0].title(), 'middle': fio[2].title()}}
 
 def get_region(url):
     return settings.REGIONS_URL_CODES[url.split('.')[1]]

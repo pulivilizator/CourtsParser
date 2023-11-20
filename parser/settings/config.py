@@ -7,17 +7,17 @@ from . import settings
 class Config:
 
     def __init__(self):
-        with open(fr'{settings.CONFIG_FILES_DIR}\templates.json', encoding='utf-8') as templates:
+        with open(fr'{settings.CONFIG_FILES_DIR}\templates.json', encoding='utf-8-sig') as templates:
             self.templates_config = json.load(templates)
 
-        with open(fr'{settings.CONFIG_FILES_DIR}\proxies.json', encoding='utf-8') as proxies:
+        with open(fr'{settings.CONFIG_FILES_DIR}\proxies.json', encoding='utf-8-sig') as proxies:
             self.proxies_json = json.load(proxies)
 
-        with open(fr'{settings.CONFIG_FILES_DIR}\bipium_keys.json', encoding='utf-8') as keys:
+        with open(fr'{settings.CONFIG_FILES_DIR}\bipium_keys.json', encoding='utf-8-sig') as keys:
             self.bipium_field_keys = json.load(keys)
 
         self.main_config = configparser.ConfigParser()
-        self.main_config.read(fr'{settings.CONFIG_FILES_DIR}\MainConfig.ini', encoding='utf-8')
+        self.main_config.read(fr'{settings.CONFIG_FILES_DIR}\MainConfig.ini', encoding='utf-8-sig')
 
     @property
     def _template(self) -> dict:

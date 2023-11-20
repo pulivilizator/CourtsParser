@@ -24,6 +24,8 @@ async def _open_page(page, config, number, url, timeout):
 
 async def _goto_checker(page: Page, config, number):
     page_content = await page.content()
+    if 'К сожалению, запрашиваемая вами страница не найдена' in page_content:
+        return None
     while 'временно недоступен. Обратитесь к данной странице позже.' in page_content:
         await asyncio.sleep(2)
         await page.reload()
@@ -37,10 +39,9 @@ async def _goto_checker(page: Page, config, number):
     except Exception as e:
         return False
     if 'В настоящий момент сервер, на котором расположен модуль сопряжения с БД «АМИРС», недоступен. Попробуйте обратиться к данной странице позже.' == check_id.strip():
-        return False
+        return None
 
-    if (f'На {page.url[-10:]} слушаний дел не назначено.' == check_id.strip() or
-            'К сожалению, запрашиваемая вами страница не найдена. Возможно, она была удалена или перемещена.' in page_content):
+    if f'На {page.url[-10:]} слушаний дел не назначено.' == check_id.strip():
         return None
     return True
 

@@ -60,14 +60,8 @@ async def parser(browser, urls: list[links_data], config, writer):
         t = asyncio.to_thread(get_lines, page_content, link_data, config)
         lines = await t
         resps = await writer.write_lines(lines)
-        print(resps)
 
     await page.close()
-
-async def thread(page_content, link_data, config, writer):
-    lines = get_lines(page_content, link_data, config)
-    resps = await writer.write_lines(lines)
-    print(resps)
 
 
 async def main(config, writer):
@@ -77,6 +71,8 @@ async def main(config, writer):
     tasks = []
     async with async_playwright() as p:
         browsers = await get_browsers(p, config)
+        if len(browsers) > len(urls):
+            browsers = browsers[:len(urls)]
         for index, browser in enumerate(browsers):
             task = asyncio.create_task(configurate_browsers(config, browser, urls[index], writer))
             tasks.append(task)
