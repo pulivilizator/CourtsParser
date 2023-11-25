@@ -74,7 +74,7 @@ def create_tmp_dict(link_data, tr, column_list, config):
 #     print(13, url)
     tmp_dict['Регион'] = get_region(url)
 #     print(14, url)
-    fio_dict = get_fio(tmp_dict['Информация по делу'])
+    fio_dict = get_fio(tmp_dict['Информация по делу'], config)
 #     print(15, url)
     if fio_dict:
 #         print(16, url)
@@ -135,16 +135,49 @@ def get_article_codes(info):
     article = info[0].replace(' ', '')
     if len(info) > 1:
         codes = info[1].split(')')[0]
-    if not article[0].isdigit() or (len(article) > 1 and article[1] in ['\'', '"']): #Спроси про отриц отзывы
-        article = codes = '-'# про js часть, в олтзывах пишут хуйня
-        #Пигшут что поддерка плохая
-        #Про скидки
-        # Про возврат СМУТИЛИ ОТЫЗВЫ
-        #СМЕЖНЫЕ ТЕХНОЛОГИИ ЕСТЬ ЛИ? WEBPACKET, GIT, GITHUB, DOCKER и тд
+    if not article[0].isdigit() or (len(article) > 1 and article[1] in ['\'', '"']):
+        article = codes = '-'
 
     return (article, codes)
 
-def get_fio(text):
+def get_fio(text, config):
+    results = []
+    text = text.split(' - ')[0]
+    for w in settings.REPL_WORDS:
+        text = text.replace(w, '')
+        text = text.replace(w.title(), '')
+        text = text.replace(w.lower(), '')
+
+    def get_lst(sep, text):
+        lst = []
+        vars = [i for i in text.split(sep)
+                if len(i.strip().split()) == 3 and not any(f.lower() in i.lower() for f in config.exception_words)]
+        for fio in vars:
+            if not fio: continue
+            fio = fio.strip().strip(';').strip(':').strip('"')
+            if len(fio.split()) == 3 and '"' not in fio and all(len(i) > 2 for i in fio.split()):
+                fio = fio.split()
+                lst.append({' '.join(fio).title(): {'first': fio[1].title(), 'last': fio[0].title(),
+                                                    'middle': fio[2].title()}})
+        if lst:
+            return lst
+        else:
+            for i in text.split(sep):
+                if i:
+                    vars = [k for k in i.split(',')
+                            if len(k.strip().split()) == 3 and not any(f.lower() in k.lower() for f in config.exception_words)]
+                    for fio in vars:
+                        if not fio: continue
+                        fio = fio.strip().strip(';').strip(':').strip('"')
+                        if len(fio.split()) == 3 and '"' not in fio and all(len(i) > 2 for i in fio.split()):
+                            fio = fio.split()
+                            lst.append({' '.join(fio).title(): {'first': fio[1].title(), 'last': fio[0].title(),
+                                                                'middle': fio[2].title()}})
+            return lst
+    results.extend(get_lst(':', text))
+    results.extend(get_lst('" ', text))
+    if results:
+        return results[0]
     return None
 
 

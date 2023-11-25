@@ -1,5 +1,8 @@
+import logging
+
 from playwright.async_api import async_playwright
 import asyncio
+import aiohttp
 
 from .urls import create_urls
 from . import browser_utils
@@ -9,8 +12,6 @@ from . import url_utils
 from collections import namedtuple
 import random
 from fake_useragent import UserAgent
-import threading
-import multiprocessing
 
 links_data = namedtuple('links_data', ['index', 'court_name', 'url'])
 
@@ -43,25 +44,20 @@ async def parser(browser, urls: list[links_data], config, writer):
     context = await browser.new_context(user_agent=UserAgent().random)
     await asyncio.sleep(random.randint(1, 5))
     page = await context.new_page()
-    for link_data in urls:
-        print(link_data.url)
-        goto_checker = await browser_utils.page_goto_validator(page, config, link_data.url, link_data.index, timeout=240000)
-        if not goto_checker:
-            continue
-        page_content = await page.content()
-        # lines = get_lines(page_content, link_data, config)
-        # try:
-        #     resps = await writer.write_lines(lines)
-        # except Exception as e:
-        #     print(e)
-        #     print(type(e))
-        #     print('writer Error')
+    async with aiohttp.ClientSession() as captcha_session:
+        for link_data in urls:
+            print(link_data.url)
+            logging.info(f'HANDLERS::EVENTLOOP:{asyncio.get_event_loop()}::URL:{link_data.url}::STATUS:OPEN')
+            goto_checker = await browser_utils.page_goto_validator(page, config, link_data.url, link_data.index, captcha_session, timeout=90000)
+            if not goto_checker:
+                continue
+            page_content = await page.content()
+            t = asyncio.to_thread(get_lines, page_content, link_data, config)
+            lines = await t
+            resps = await writer.write_lines(lines)
+            logging.info(f'HANDLERS::EVENTLOOP:{asyncio.get_event_loop()}::URL:{link_data.url}::STATUS:FINISHED')
 
-        t = asyncio.to_thread(get_lines, page_content, link_data, config)
-        lines = await t
-        resps = await writer.write_lines(lines)
-
-    await page.close()
+        await page.close()
 
 
 async def main(config, writer):

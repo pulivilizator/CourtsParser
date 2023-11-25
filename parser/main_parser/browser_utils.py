@@ -1,17 +1,18 @@
 import asyncio
 import random
+import logging
 from playwright.async_api import Page
 
 from .captcha import captcha
 
 
-async def _open_page(page, config, number, url, timeout):
+async def _open_page(page, config, number, url, timeout, captcha_session):
     goto_flag = False
     while not goto_flag:
         try:
             await page.goto(url, timeout=timeout)
             await asyncio.sleep(3)
-            checker = await _goto_checker(page, config, number)
+            checker = await _goto_checker(page, config, number, captcha_session)
             if checker is None:
                 return False
             goto_flag = checker
@@ -19,10 +20,11 @@ async def _open_page(page, config, number, url, timeout):
             print(e)
             print(type(e))
             print('Goto error')
+            logging.warning(f'OPEN_PAGE::ERROR_TYPE:{type(e)}::ERROR_DESCRIPTION:{e}')
             goto_flag = False
     return goto_flag
 
-async def _goto_checker(page: Page, config, number):
+async def _goto_checker(page: Page, config, number, captcha_session):
     page_content = await page.content()
     if 'К сожалению, запрашиваемая вами страница не найдена' in page_content:
         return None
@@ -31,7 +33,7 @@ async def _goto_checker(page: Page, config, number):
         await page.reload()
         await asyncio.sleep(2)
         page_content = await page.content()
-    captcha = await _solve_captcha(config, page, number)
+    captcha = await _solve_captcha(config, page, number, captcha_session)
     if not captcha:
         return False
     try:
@@ -45,17 +47,18 @@ async def _goto_checker(page: Page, config, number):
         return None
     return True
 
-async def _solve_captcha(config, page, number):
+async def _solve_captcha(config, page, number, captcha_session):
     captcha_flag = False
     while not captcha_flag:
-        try:
-            captcha_flag = await captcha(config, page, number)
-        except Exception as e:
-            print(e)
-            print(2)
-            return False
+        # try:
+        #     captcha_flag = await captcha(config, page, number)
+        # except Exception as e:
+        #     print(e)
+        #     print(2)
+        #     return False
+        captcha_flag = await captcha(config, page, number, captcha_session)
     return True
 
-async def page_goto_validator(page: Page, config, url, number, timeout=50000):
-    checker = await _open_page(page, config, number, url, timeout)
+async def page_goto_validator(page: Page, config, url, number, captcha_session, timeout=50000):
+    checker = await _open_page(page, config, number, url, timeout, captcha_session)
     return checker

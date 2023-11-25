@@ -4,11 +4,15 @@ from datetime import datetime, timedelta
 
 from . import settings
 
+
 class Config:
 
     def __init__(self):
         with open(fr'{settings.CONFIG_FILES_DIR}\templates.json', encoding='utf-8-sig') as templates:
             self.templates_config = json.load(templates)
+
+        with open(fr'{settings.CONFIG_FILES_DIR}\exception_words.json', encoding='utf-8-sig') as words:
+            self.except_words = json.load(words)
 
         with open(fr'{settings.CONFIG_FILES_DIR}\proxies.json', encoding='utf-8-sig') as proxies:
             self.proxies_json = json.load(proxies)
@@ -46,7 +50,7 @@ class Config:
     @property
     def browsers_and_pages(self):
         bp = {'browsers': self.main_config.getint('main_settings', 'browsers'),
-                'pages': self.main_config.getint('main_settings', 'pages')}
+              'pages': self.main_config.getint('main_settings', 'pages')}
         if (not bp['browsers'] or bp['browsers'] > len(self.proxies)) and self.proxies_json:
             bp['browsers'] = len(self.proxies)
         elif not bp['browsers'] and not self.proxies_json:
@@ -103,3 +107,26 @@ class Config:
     @property
     def writer(self):
         return self.main_config.get('main_settings', 'csv_or_bipium')
+
+    @property
+    def start_time(self):
+        return [i.strip() for i in self.main_config.get('main_settings', 'start_time').split(',')]
+
+    @property
+    def check_dates(self):
+        date_now = datetime.now().strftime('%d.%m.%Y')
+        stop_dates = [i.strip() for i in self.main_config.get('main_settings', 'stop_dates').split(',')]
+        return not date_now in stop_dates
+
+    @property
+    def start_now(self):
+        start = self.main_config.getboolean('main_settings', 'start_now')
+        if start:
+            self.main_config.set('main_settings', 'start_now', 'off')
+            with open(fr'{settings.CONFIG_FILES_DIR}\MainConfig.ini', 'w') as f:
+                self.main_config.write(f)
+        return start
+
+    @property
+    def exception_words(self):
+        return self.except_words['words']
