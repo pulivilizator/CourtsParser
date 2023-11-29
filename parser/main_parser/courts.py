@@ -42,23 +42,11 @@ async def get_hrefs(proxy, url, semaphore):
                 courts_list = soup.find(class_='msSearchResultTbl').find_all('tr')
                 courts = []
                 for tr in courts_list:
-                    link = tr.find('a', target='_blank')
+                    link = tr.find('a', target='_blank').text
                     if link and all(reg not in link for reg in settings.NOT_PARSING_URLS):
-                        courts.append((tr.find('a').text, tr.find('a', target='_blank').text))
+                        courts.append((tr.find('a').text, link))
                 await asyncio.sleep(1)
                 return courts
-
-# def get_all_courts():
-#     ua = UserAgent()
-#     url = settings.ALL_REGIONS_URL
-#     headers = {'user-agent': ua.random}
-#     response = requests.get(url, headers=headers)
-#     soup = BeautifulSoup(response.text, 'html.parser')
-#
-#     courts_list = [i.text for i in soup.find_all('a', target='_blank')]
-#     courts = list(filter(lambda x: all(reg not in x for reg in settings.NOT_PARSING_URLS), courts_list))
-#
-#     return courts
 
 def get_all_courts():
     ua = UserAgent()

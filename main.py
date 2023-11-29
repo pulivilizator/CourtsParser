@@ -29,7 +29,6 @@ async def p():
             for _ in range(10):
                 await pag.reload()
                 time.sleep(2)
-            print(proxy)
             time.sleep(10)
             await pag.close()
 
@@ -59,7 +58,7 @@ def main_parser(config):
 if __name__ == '__main__':
     while True:
         config = Config()
-        if config.start_now or (datetime.now().strftime('%H:%M') in config.start_time and config.check_dates):
+        if config.start_now or (datetime.now().strftime('%H:%M') in config.start_time and config.check_dates) and datetime.now() < datetime.fromisoformat('2024-01-01 00:00:00'):
             logging.basicConfig(level=logging.INFO, filename=f'logs/{datetime.now().strftime("%Y-%m-%d")}.log',
                                 filemode='a', format="%(asctime)s %(levelname)s %(message)s")
             c = 1

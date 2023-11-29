@@ -1,20 +1,23 @@
 {
-	"templateName1":
+	"template1":
 		{
 			"regions":
 				{
-					"RegionName1":	['CityName', 'CityName', ...],
-					"RegionName2": [] #All cities in this region
+					"Алтайский край": ["Бийск"],
+					"Тверская область": [],
+					"Саратовская область": [],
+					"Краснодарский край": []
+				},
+			"days": "5, -2",
+			"articles": "all"
+		},
+	"none_regions":
+		{
+			"regions":
+				{
 
 				},
-			"days": [9, 21, 5, 14]
-		},
-	"all_regions":
-		{
-			"regions":
-				{
-                  #All regions
-				},
-			"days": [9, 21, 5, 14]
+			"days": "5, 6, -4",
+			"articles": "all"
 		}
 }

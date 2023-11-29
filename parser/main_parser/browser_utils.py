@@ -1,6 +1,8 @@
 import asyncio
 import random
 import logging
+
+from fake_useragent import UserAgent
 from playwright.async_api import Page
 
 from .captcha import captcha
@@ -21,6 +23,8 @@ async def _open_page(page, config, number, url, timeout, captcha_session):
             print(type(e))
             print('Goto error')
             logging.warning(f'OPEN_PAGE::ERROR_TYPE:{type(e)}::ERROR_DESCRIPTION:{e}')
+            if str(e) == 'Target page, context or browser has been closed':
+                return {'error': 'page closed'}
             goto_flag = False
     return goto_flag
 
@@ -61,4 +65,9 @@ async def _solve_captcha(config, page, number, captcha_session):
 
 async def page_goto_validator(page: Page, config, url, number, captcha_session, timeout=50000):
     checker = await _open_page(page, config, number, url, timeout, captcha_session)
+    # while isinstance(checker, dict):
+    #     await context.close()
+    #     context = await browser.new_context(user_agent=UserAgent().random)
+    #     page = await context.new_page()
+    #     checker = await _open_page(page, config, number, url, timeout, captcha_session)
     return checker

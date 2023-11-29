@@ -37,7 +37,7 @@ def create_tmp_dict(link_data, tr, column_list, config):
     success_articles = config.articles
     court_name = link_data.court_name
     # print('tmp start', url)
-    tmp_dict = {'Номер дела': '-', 'Время слушания': '-', 'Событие': '-', 'Информация по делу': '-', 'Результат слушания': '', 'Судья': '-'}
+    tmp_dict = {'Номер дела': '-', 'Время слушания': '-', 'Событие': '-', 'Информация по делу': '-', 'Результат слушания': '', 'Судья': '-', 'Заседание': 'Не было'}
 #     print(1, url)
     td_elements = tr.find_all('td')
 #     print(2, url)
@@ -59,7 +59,7 @@ def create_tmp_dict(link_data, tr, column_list, config):
 #     print(5, url)
     tmp_dict['Участок'] = court_name
 #     print(6, url)
-    tmp_dict['Город'] = get_city(court_name)
+    tmp_dict['Город'] = get_city(link_data.address)
 #     print(7, url)
     tmp_dict['URL страницы'] = url
 #     print(8, url)
@@ -116,12 +116,22 @@ def create_tmp_dict(link_data, tr, column_list, config):
 
 
 def get_city(court_name: str):###
-    if 'г.' in court_name:
-        return court_name.split('г.')[1].strip().split()[0]
-    elif 'городе' in court_name:
-        return court_name.split('городе')[1].strip().split()[0]
-    elif 'города' in court_name:
-        return court_name.split('города')[1].strip().split()[0]
+    if ' г.' in court_name:
+        return court_name.split(' г.')[1].strip().split(',')[0]
+    elif ' городе' in court_name:
+        return court_name.split(' городе')[1].strip().split(',')[0]
+    elif ' города' in court_name:
+        return court_name.split(' города')[1].strip().split(',')[0]
+    elif ' с.' in court_name:
+        return court_name.split(' с.')[1].strip().split(',')[0]
+    elif ' п.' in court_name:
+        return court_name.split(' п.')[1].strip().split(',')[0]
+    elif ' пгт ' in court_name or ' пгт.' in court_name:
+        return court_name.split(' пгт')[1].strip().strip('.').split(',')[0]
+    elif ' рп.' in court_name:
+        return court_name.split(' рп.')[1].strip().split(',')[0]
+    elif ' х.' in court_name:
+        return court_name.split(' х.')[1].strip().split(',')[0]
     return '-'
 
 def get_article_codes(info):
@@ -151,7 +161,7 @@ def get_fio(text, config):
     def get_lst(sep, text):
         lst = []
         vars = [i for i in text.split(sep)
-                if len(i.strip().split()) == 3 and not any(f.lower() in i.lower() for f in config.exception_words)]
+                if len(i.strip().split()) == 3 and not any(f.upper() in i or f.title() in i.title() for f in config.exception_words)]
         for fio in vars:
             if not fio: continue
             fio = fio.strip().strip(';').strip(':').strip('"')
@@ -191,33 +201,3 @@ def get_days(dates):
     difference = dates - date_now
     difference_in_days = difference.days
     return difference_in_days
-
-def create_json(page_content, link_data, config):
-    data = html_parser(page_content, link_data, config)
-    lines = []
-    for k, v in data.items():
-        for d in v:
-            json_dict = {"values": {}}
-            d['Подраздел'] = k
-            for number, key in config.bipium_keys.items():
-                json_dict['values'][number] = d[key]
-            lines.append(json_dict)
-    return lines
-
-def create_list(page_content, link_data, config):
-    lines = []
-    data = html_parser(page_content, link_data, config)
-    for k, v in data.items():
-        for d in v:
-            d['Подраздел'] = k
-            d['Дата сборки'] = datetime.now().strftime('%d.%m.%Y')
-            line = [d[key] for key in settings.CSV_TITLES]
-            lines.append(line)
-    return lines
-
-def get_lines(page_content, link_data, config):
-    writer = config.writer
-    if writer == 'excel':
-        return create_list(page_content, link_data, config)
-    elif writer == 'bipium':
-        return create_json(page_content, link_data, config)

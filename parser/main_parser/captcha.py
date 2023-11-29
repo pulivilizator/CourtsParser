@@ -105,16 +105,10 @@ async def captcha(config, page: Page, number, session: aiohttp.ClientSession):
             return True
 
         else:
-            await page.locator('#kcaptchaForm img').screenshot(path=f'captcha_images/img{number}.png', timeout=240000)
-            # print('1) Скриншот области успешно сделан')
-            # try:
-            #     text = await sender_solve(cap_monster_client)
-            # except (GetTaskError, asyncio.TimeoutError) as e:
-            #     print(e, 'ERROR')
-            #     await page.reload(timeout=60000)
+            await page.locator('#kcaptchaForm img').screenshot(path=f'captcha_images/img{number}.png', timeout=120000)
             text = await sender_solve()
             await page.fill('.text-input', text)
-            await page.press('.button-normal', 'Enter', timeout=240000)
+            await page.press('.button-normal', 'Enter', timeout=120000)
             await asyncio.sleep(1)
             if 'Для продолжения необходимо пройти дополнительную проверку' in page_content:
                 flag = True

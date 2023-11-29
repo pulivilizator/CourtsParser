@@ -6,14 +6,14 @@ import aiohttp
 
 from .urls import create_urls
 from . import browser_utils
-from .html_parser import get_lines
 from . import url_utils
+from .writer import write
 
 from collections import namedtuple
 import random
 from fake_useragent import UserAgent
 
-links_data = namedtuple('links_data', ['index', 'court_name', 'url'])
+links_data = namedtuple('links_data', ['index', 'court_name', 'url', 'address'])
 
 async def get_browsers(p, config):
     browsers = []
@@ -51,10 +51,7 @@ async def parser(browser, urls: list[links_data], config, writer):
             goto_checker = await browser_utils.page_goto_validator(page, config, link_data.url, link_data.index, captcha_session, timeout=90000)
             if not goto_checker:
                 continue
-            page_content = await page.content()
-            t = asyncio.to_thread(get_lines, page_content, link_data, config)
-            lines = await t
-            resps = await writer.write_lines(lines)
+            await write(page, link_data, config, writer)
             logging.info(f'HANDLERS::EVENTLOOP:{asyncio.get_event_loop()}::URL:{link_data.url}::STATUS:FINISHED')
 
         await page.close()
@@ -62,7 +59,8 @@ async def parser(browser, urls: list[links_data], config, writer):
 
 async def main(config, writer):
     urls = await create_urls(config)
-    urls = [links_data(index=ind, court_name=url[0], url=url[1]) for ind, url in enumerate(urls)]
+    #urls = [links_data(index=ind, court_name=url[0], url=url[1], address=url[2]) for ind, url in enumerate(urls)]
+    urls = [links_data(index=ind, court_name=url[0], url='http://blag6.amr.msudrf.ru/modules.php?name=sud_delo&op=hl&H_date=11.12.2023', address=url[2]) for ind, url in enumerate(urls)]
     urls = url_utils.split_list(urls, config.browsers_and_pages['browsers'])
     tasks = []
     async with async_playwright() as p:
