@@ -9,26 +9,15 @@ from ..settings import settings
 
 
 def create_json(data, link_data, config):
-    print(1, 'json')
     lines = []
     for k, v in data.items():
-        print(2, 'json')
         for d in v:
-            print(3, 'json')
             json_dict = {"values": {}}
-            print(4, 'json')
             d['Адрес'] = link_data.address
-            print(5, 'json')
             d['Подраздел'] = k
-            print(6, 'json')
-            print(config.bipium_keys.items())
             for number, key in config.bipium_keys.items():
-                print(7, 'json')
                 json_dict['values'][number] = d[key]
-                print(8, 'json')
             lines.append(json_dict)
-            print(9, 'json')
-    print(10, 'json')
     return lines
 
 def create_list(data, link_data, config):
@@ -43,14 +32,10 @@ def create_list(data, link_data, config):
     return lines
 
 def get_lines(data, link_data, config):
-    print(1, 'lones')
     writer = config.writer
-    print(2, 'lones')
     if writer == 'excel':
-        print(2.1, 'lones')
         return create_list(data, link_data, config)
     elif writer == 'bipium':
-        print(2.2, 'lones')
         return create_json(data, link_data, config)
 
 
@@ -73,32 +58,21 @@ async def check_case(page: Page):
             return True
 
 async def create_lines(page: Page, link_data, config):
-    print(1)
     page_content = await page.content()
     data = html_parser(page_content, link_data, config)
     for d_type, lines in data.items():
         for line in lines:
-            print(line)
             await page.goto(line['URL дела'])
-            print(2)
             page_content = await page.content()
-            print(3)
             if 'движение дела' in page_content.lower() and ('рассмотрение дела' in page_content.lower() or 'судебное заседание' in page_content.lower()):
-                print(4)
                 case = await check_case(page)
-                print(5)
                 if case:
-                    print(5.5)
                     line['Заседание'] = 'Было'
-                print(6)
-    print(7)
     lines = get_lines(data, link_data, config)
-    print(8)
     return lines
 
 
 async def write(page, link_data, config, writer):
     lines = await create_lines(page, link_data, config)
     r = await writer.write_lines(lines)
-    print(r)
 

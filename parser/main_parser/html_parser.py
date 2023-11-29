@@ -36,70 +36,42 @@ def create_tmp_dict(link_data, tr, column_list, config):
     url = link_data.url
     success_articles = config.articles
     court_name = link_data.court_name
-    # print('tmp start', url)
     tmp_dict = {'Номер дела': '-', 'Время слушания': '-', 'Событие': '-', 'Информация по делу': '-', 'Результат слушания': '', 'Судья': '-', 'Заседание': 'Не было'}
-#     print(1, url)
     td_elements = tr.find_all('td')
-#     print(2, url)
     for column, td in zip(column_list, td_elements):
         tmp_dict[column] = td.text
     tmp_dict['Информация по делу'] = tmp_dict['Информация по делу'].replace('  ', ' ')
-#     print(3, url)
     article, codes = get_article_codes(tmp_dict['Информация по делу'])
     if article not in success_articles and success_articles[0] != 'all':
         return None
     tmp_dict['Номер статьи'] = article.replace(';', '')
-#     print(3.5)
     td_href = tr.find('a')
     if td_href.has_attr('href'):
         tmp_dict['URL дела'] = url.split('.ru')[0] + '.ru' + td_href['href']
     else:
         tmp_dict['URL дела'] = url
-#     print(4, url)
-#     print(5, url)
     tmp_dict['Участок'] = court_name
-#     print(6, url)
     tmp_dict['Город'] = get_city(link_data.address)
-#     print(7, url)
     tmp_dict['URL страницы'] = url
-#     print(8, url)
     date = datetime.strptime(url[-10:], '%d.%m.%Y')
-#     print(9, url)
     tmp_dict['Дата'] = date.strftime('%Y-%m-%d')
-#     print(10, url)
     tmp_dict['Кодекс'] = codes
-#     print(12, url)
-    # tmp_dict['Дата сборки'] = datetime.now().strftime("%d.%m.%Y")
     tmp_dict['Количеством дней'] = str(get_days(tmp_dict['Дата']))
-#     print(13, url)
     tmp_dict['Регион'] = get_region(url)
-#     print(14, url)
     fio_dict = get_fio(tmp_dict['Информация по делу'], config)
-#     print(15, url)
     if fio_dict:
-#         print(16, url)
         fio = list(fio_dict.keys())[0]
-#         print(17, url)
         fio_sep = fio_dict[fio]
-#         print(18, url)
         tmp_dict['ФИО'] = fio
-#         print(19, url)
         tmp_dict['Фамилия Имя'] = fio_sep['last'] + ' ' + fio_sep['first']
-#         print(20, url)
         tmp_dict['Имя Отчество'] = fio_sep['first'] + ' ' + fio_sep['middle']
-#         print(21, url)
         tmp_dict['Фамилия'] = fio_sep['last']
-#         print(22, url)
         tmp_dict['Имя'] = fio_sep['first']
-#         print(23, url)
         tmp_dict['Отчество'] = fio_sep['middle']
-#         print(24, url)
         tmp_dict['ФИО и номер дела'] = tmp_dict['ФИО'] + ' ' + tmp_dict['Номер дела']
-#         print(25, url)
         tmp_dict['ФИО и дата дела'] = tmp_dict['ФИО'] + ' ' + date.strftime('%d.%m.%Y')
-#         print(26, url)
         tmp_dict['ФИО и область'] = tmp_dict['ФИО'] + ' ' + get_region(url)
-#         print(27, url)
+
     else:
         tmp_dict['ФИО'] = '-'
         tmp_dict['Фамилия Имя'] = '-'
@@ -110,7 +82,6 @@ def create_tmp_dict(link_data, tr, column_list, config):
         tmp_dict['ФИО и номер дела'] = '-'
         tmp_dict['ФИО и дата дела'] = '-'
         tmp_dict['ФИО и область'] = '-'
-    # print('tmp end')
     return tmp_dict
 
 

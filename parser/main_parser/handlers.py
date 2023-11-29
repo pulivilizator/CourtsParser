@@ -59,8 +59,7 @@ async def parser(browser, urls: list[links_data], config, writer):
 
 async def main(config, writer):
     urls = await create_urls(config)
-    #urls = [links_data(index=ind, court_name=url[0], url=url[1], address=url[2]) for ind, url in enumerate(urls)]
-    urls = [links_data(index=ind, court_name=url[0], url='http://blag6.amr.msudrf.ru/modules.php?name=sud_delo&op=hl&H_date=11.12.2023', address=url[2]) for ind, url in enumerate(urls)]
+    urls = [links_data(index=ind, court_name=url[0], url=url[1], address=url[2]) for ind, url in enumerate(urls)]
     urls = url_utils.split_list(urls, config.browsers_and_pages['browsers'])
     tasks = []
     async with async_playwright() as p:
