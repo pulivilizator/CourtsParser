@@ -41,7 +41,15 @@ def get_lines(data, link_data, config):
 
 async def check_case(page: Page):
     all_content = []
+    page_content = await page.content()
     header_elements = await page.query_selector('tr.text-center')
+    if not header_elements and 'наименование события' in page_content.lower():
+        h_trs = await page.query_selector_all('tr')
+        for tr in h_trs:
+            tr_text = await tr.text_content()
+            if 'наименование события' in tr_text.lower():
+                header_elements = tr
+                break
     headers = [await td.text_content() for td in await header_elements.query_selector_all('td')]
     trs = await page.query_selector_all('tr')
     for tr in trs:
@@ -53,8 +61,10 @@ async def check_case(page: Page):
         return True
     elif all_content:
         content = dict(zip(headers, all_content[0]))
-        [key] = [i for i in content.keys() if 'результат' in i.lower()]
-        if content[key].replace(' ', ''):
+        key = [i for i in content.keys() if 'результат' in i.lower()]
+        if not key:
+            return False
+        if content[key[0]].replace(' ', ''):
             return True
 
 async def create_lines(page: Page, link_data, config):

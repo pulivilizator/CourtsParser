@@ -4,10 +4,26 @@ import logging
 
 from fake_useragent import UserAgent
 from playwright.async_api import Page
+from playwright._impl._api_types import Error as PWError
 
 from .captcha import captcha
 
-
+# async def _open_page(page, config, number, url, timeout, captcha_session):
+#     goto_flag = False
+#     while not goto_flag:
+#         try:
+#             await page.goto(url, timeout=timeout)
+#         except PWError as e:
+#             print(e)
+#             print(type(e))
+#             goto_flag = False
+#         else:
+#             await asyncio.sleep(3)
+#             checker = await _goto_checker(page, config, number, captcha_session)
+#             if checker is None:
+#                 return False
+#             goto_flag = checker
+#     return goto_flag
 async def _open_page(page, config, number, url, timeout, captcha_session):
     goto_flag = False
     while not goto_flag:
@@ -18,13 +34,11 @@ async def _open_page(page, config, number, url, timeout, captcha_session):
             if checker is None:
                 return False
             goto_flag = checker
-        except Exception as e:
+        except PWError as e:
             print(e)
             print(type(e))
             print('Goto error')
             logging.warning(f'OPEN_PAGE::ERROR_TYPE:{type(e)}::ERROR_DESCRIPTION:{e}')
-            if str(e) == 'Target page, context or browser has been closed':
-                return {'error': 'page closed'}
             goto_flag = False
     return goto_flag
 
@@ -54,20 +68,9 @@ async def _goto_checker(page: Page, config, number, captcha_session):
 async def _solve_captcha(config, page, number, captcha_session):
     captcha_flag = False
     while not captcha_flag:
-        # try:
-        #     captcha_flag = await captcha(config, page, number)
-        # except Exception as e:
-        #     print(e)
-        #     print(2)
-        #     return False
         captcha_flag = await captcha(config, page, number, captcha_session)
     return True
 
 async def page_goto_validator(page: Page, config, url, number, captcha_session, timeout=50000):
     checker = await _open_page(page, config, number, url, timeout, captcha_session)
-    # while isinstance(checker, dict):
-    #     await context.close()
-    #     context = await browser.new_context(user_agent=UserAgent().random)
-    #     page = await context.new_page()
-    #     checker = await _open_page(page, config, number, url, timeout, captcha_session)
     return checker
