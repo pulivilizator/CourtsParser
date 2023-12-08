@@ -42,7 +42,10 @@ async def get_hrefs(proxy, url, semaphore):
                 courts_list = soup.find(class_='msSearchResultTbl').find_all('tr')
                 courts = []
                 for tr in courts_list:
-                    link = tr.find('a', target='_blank').text
+                    t_link = tr.find('a', target='_blank')
+                    if not t_link:
+                        continue
+                    link = t_link.text
                     if link and all(reg not in link for reg in settings.NOT_PARSING_URLS):
                         courts.append((tr.find('a').text, link))
                 await asyncio.sleep(1)

@@ -114,7 +114,7 @@ class Config:
     def check_dates(self):
         date_now = datetime.now().strftime('%d.%m.%Y')
         stop_dates = [i.strip() for i in self.main_config.get('main_settings', 'stop_dates').split(',')]
-        return not date_now in stop_dates and datetime.now() < datetime.fromisoformat('2024-01-01 00:00:00')
+        return not date_now in stop_dates
 
     @property
     def start_now(self):
