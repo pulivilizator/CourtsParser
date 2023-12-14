@@ -51,7 +51,12 @@ async def parser(browser, urls: list[links_data], config, writer):
             goto_checker = await browser_utils.page_goto_validator(page, config, link_data.url, link_data.index, captcha_session, timeout=90000)
             if not goto_checker:
                 continue
-            await write(page, link_data, config, writer)
+            try:
+                await write(page, link_data, config, writer)
+            except Exception as e:
+                print(f'HANDLERS::ERROR_WRITE:{e}::URL:{link_data.url}')
+                logging.warning(f'HANDLERS::ERROR_WRITE:{e}::URL:{link_data.url}')
+                continue
             logging.info(f'HANDLERS::EVENTLOOP:{asyncio.get_event_loop()}::URL:{link_data.url}::STATUS:FINISHED')
 
         await page.close()
